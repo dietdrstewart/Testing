@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: price-hunter
+    runtime: docker
+    plan: starter          # $7/month — needed for persistent disk + enough RAM for Chromium
+    disk:
+      name: price-data
+      mountPath: /data
+      sizeGB: 1
+    envVars:
+      - key: DB_PATH
+        value: /data/price_hunter.db
+      - key: PORT
+        value: 5050

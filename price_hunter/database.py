@@ -1,12 +1,14 @@
 from __future__ import annotations
 
+import os
 import sqlite3
 from contextlib import contextmanager
 from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Generator
 
-DB_PATH = Path.home() / ".price_hunter.db"
+_default_db = Path.home() / ".price_hunter.db"
+DB_PATH = Path(os.environ.get("DB_PATH", str(_default_db)))
 
 
 def init_db() -> None:
