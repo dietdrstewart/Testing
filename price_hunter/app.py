@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import atexit
 import json
 import logging
+import os
 import threading
 from queue import Empty, Queue
 
@@ -20,6 +22,8 @@ logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
+# ── Active scan state ──────────────────────────────────────────────────────
+
 _scan_lock = threading.Lock()
 _scan_queue: Queue[dict] | None = None
 _scan_thread: threading.Thread | None = None
@@ -28,6 +32,56 @@ _scan_thread: threading.Thread | None = None
 def _is_scanning() -> bool:
     return _scan_thread is not None and _scan_thread.is_alive()
 
+
+# ── APScheduler — nightly 3 AM scan ───────────────────────────────────────
+
+def _start_scheduler() -> None:
+    try:
+        from apscheduler.schedulers.background import BackgroundScheduler
+        from apscheduler.triggers.cron import CronTrigger
+
+        scheduler = BackgroundScheduler(daemon=True)
+
+        def _nightly_job():
+            with _scan_lock:
+                if _is_scanning():
+                    logger.info("Scheduler: skipping — scan already in progress")
+                    return
+
+            logger.info("Scheduler: starting nightly scan")
+            try:
+                for event in run_package_scan(headed=False):
+                    if event.get("type") == "done":
+                        logger.info(f"Scheduler scan complete — {event.get('total_rows', 0)} rows")
+                    elif event.get("type") == "error":
+                        logger.error(f"Scheduler scan error: {event.get('error')}")
+            except Exception as e:
+                logger.exception(f"Scheduler scan failed: {e}")
+
+        scheduler.add_job(
+            _nightly_job,
+            trigger=CronTrigger(hour=3, minute=0, timezone="America/New_York"),
+            id="nightly_scan",
+            replace_existing=True,
+            max_instances=1,
+            coalesce=True,
+        )
+        scheduler.start()
+        atexit.register(lambda: scheduler.shutdown(wait=False))
+
+        app.config["_scheduler"] = scheduler
+        logger.info("APScheduler started — nightly scan at 3:00 AM ET")
+
+    except ImportError:
+        logger.warning("apscheduler not installed — scheduled scans disabled")
+
+
+# Only start scheduler in the main process (not Flask reloader subprocess)
+if os.environ.get("WERKZEUG_RUN_MAIN") != "true":
+    _start_scheduler()
+
+
+# ── Routes ────────────────────────────────────────────────────────────────
 
 @app.route("/")
 def index():
@@ -92,7 +146,6 @@ def scan_stream():
 
 @app.route("/chart-data")
 def chart_data():
-    """Returns chart-ready JSON for all 5 vacations."""
     db.init_db()
     threshold = float(request.args.get("threshold", 1.0))
     all_pkg = db.get_package_history()
@@ -115,8 +168,30 @@ def chart_data():
 
 @app.route("/status")
 def status():
+    scheduler = app.config.get("_scheduler")
+    next_scan = None
+    if scheduler:
+        job = scheduler.get_job("nightly_scan")
+        if job and job.next_run_time:
+            next_scan = job.next_run_time.strftime("%A %b %-d at %-I:%M %p %Z")
+
     return jsonify({
         "scanning": _is_scanning(),
         "scan_count": db.get_scan_count(),
         "last_scan": db.get_last_scan(),
+        "next_scheduled_scan": next_scan,
+    })
+
+
+@app.route("/next-scan")
+def next_scan_route():
+    scheduler = app.config.get("_scheduler")
+    if not scheduler:
+        return jsonify({"next_scan": None, "message": "Scheduler not running"})
+    job = scheduler.get_job("nightly_scan")
+    if not job or not job.next_run_time:
+        return jsonify({"next_scan": None})
+    return jsonify({
+        "next_scan": job.next_run_time.isoformat(),
+        "next_scan_human": job.next_run_time.strftime("%A %b %-d at %-I:%M %p %Z"),
     })

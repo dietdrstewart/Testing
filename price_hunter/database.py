@@ -57,8 +57,11 @@ def init_db() -> None:
 
 @contextmanager
 def _conn() -> Generator[sqlite3.Connection, None, None]:
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DB_PATH, timeout=10)
     conn.row_factory = sqlite3.Row
+    # WAL mode allows concurrent reads during writes — essential for parallel scrapers
+    conn.execute("PRAGMA journal_mode=WAL")
+    conn.execute("PRAGMA busy_timeout=5000")
     try:
         yield conn
         conn.commit()

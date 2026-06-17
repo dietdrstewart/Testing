@@ -102,3 +102,15 @@ def get_sunday_weeks(n_weeks: int = 26) -> list[tuple[date, date]]:
         (first_sunday + timedelta(weeks=i), first_sunday + timedelta(weeks=i, days=6))
         for i in range(n_weeks)
     ]
+
+
+def get_sampled_weeks(weeks: list[tuple[date, date]]) -> list[tuple[date, date]]:
+    """
+    Reduce 26 weeks to ~17 for flight queries:
+      - All 8 nearest Sundays (most actionable, book soon)
+      - Every other Sunday for weeks 9-26 (directional trend data)
+    Total: 8 + 9 = 17 queries per route instead of 26 (35% fewer).
+    """
+    near = weeks[:8]
+    far = weeks[8::2]
+    return near + far
