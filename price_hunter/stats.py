@@ -5,7 +5,7 @@ from collections import defaultdict
 from datetime import date, datetime
 from typing import Any
 
-MIN_OBSERVATIONS = 3
+MIN_OBSERVATIONS = 1
 
 
 # ── Package-level anomaly detection ────────────────────────────────────────

@@ -154,12 +154,19 @@
     <!-- Legend -->
     <div class="d-flex flex-wrap gap-3 mb-3" id="chart-legend"></div>
 
-    <div id="chart-wrap">
+    <div id="chart-wrap" style="position:relative">
       <canvas id="priceChart"></canvas>
+      <div id="chart-empty" style="display:none;position:absolute;inset:0;align-items:center;
+           justify-content:center;flex-direction:column;gap:8px;color:var(--muted);text-align:center">
+        <div style="font-size:2rem">📊</div>
+        <div class="fw-semibold">No price data yet</div>
+        <div class="small">Run a scan to start collecting prices.</div>
+      </div>
     </div>
 
     <div class="text-muted small mt-2" id="chart-note">
-      Green dots = weeks priced 1σ+ below that vacation's average. Dashed line = average.
+      {% if scan_count < 2 %}Each dot = one week's price. More scans reveal the distribution and flag real deals.
+      {% else %}Green dots = weeks priced 1σ+ below that vacation's own historical average. Dashed line = average.{% endif %}
     </div>
   </div>
 
@@ -351,6 +358,18 @@ function renderChart(data) {
     const pts = data.chart_data[vid] || [];
     pts.forEach(p => allWeeks.add(p.week_start));
   }
+
+  // Empty state — no data in DB yet
+  const emptyEl = document.getElementById('chart-empty');
+  if (allWeeks.size === 0) {
+    if (emptyEl) emptyEl.style.display = 'flex';
+    chart.data.labels = [];
+    chart.data.datasets = [];
+    chart.update();
+    return;
+  }
+  if (emptyEl) emptyEl.style.display = 'none';
+
   const labels = [...allWeeks].sort().map(w => {
     const d = new Date(w + 'T00:00:00');
     return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
@@ -365,7 +384,7 @@ function renderChart(data) {
     const yValues = sortedWeeks.map(w => {
       const p = ptMap[w];
       if (!p) return null;
-      if (currentView === 'pct') return p.deviation_pct;
+      if (currentView === 'pct') return p.deviation_pct ?? 0;
       return p.price;
     });
 

@@ -34,6 +34,15 @@ DOMESTIC_ROUTES = {"MCO", "MIA"}
 INTL_INFANT_FACTOR = 1.05   # ~5% international infant surcharge
 PAID_SEATS = 5               # 2 adults + 3 children; infant on lap
 
+# Fallback family round-trip prices (5 paid seats) used when live scraping is blocked.
+# Based on typical PHL departure prices; updated manually if averages drift significantly.
+ROUTE_FALLBACKS: dict[str, float] = {
+    "MCO": 1_500.0,   # PHL→MCO ~$300/person × 5 (domestic)
+    "MIA": 1_750.0,   # PHL→MIA ~$350/person × 5 (domestic)
+    "CUN": 2_625.0,   # PHL→CUN ~$500/person × 5 × 1.05 (international)
+    "NCE": 5_775.0,   # PHL→NCE ~$1,100/person × 5 × 1.05 (international)
+}
+
 
 class FlightScraper(BaseScraper):
     SOURCE = "flights"
@@ -89,6 +98,17 @@ class FlightScraper(BaseScraper):
                 continue
             dest_code, prices = item
             out[dest_code].update(prices)
+
+        # For any route that returned nothing (bot-blocked, timeout, etc.), fill in fallbacks
+        # so package assembler always has flight costs to work with.
+        for dest_code in ROUTES:
+            if not out.get(dest_code):
+                fallback = ROUTE_FALLBACKS.get(dest_code, 0.0)
+                logger.warning(
+                    f"Flight route {dest_code}: no live prices scraped — "
+                    f"using fallback ${fallback:,.0f} per week"
+                )
+                out[dest_code] = {d.isoformat(): fallback for d in sunday_dates}
 
         total = sum(len(v) for v in out.values())
         logger.info(f"Flights: collected {total} price points across {len(out)} routes")
