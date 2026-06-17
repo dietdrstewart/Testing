@@ -8,15 +8,18 @@ from queue import Empty, Queue
 from flask import Flask, Response, jsonify, render_template, request
 
 from . import database as db
-from .scanner import run_full_scan
-from .stats import find_deals, get_baseline_summary
+from .package_scanner import run_package_scan
+from .stats import analyze_packages
+from .vacations import VACATIONS
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s - %(message)s")
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s - %(message)s",
+)
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
-# Shared state for the active scan
 _scan_lock = threading.Lock()
 _scan_queue: Queue[dict] | None = None
 _scan_thread: threading.Thread | None = None
@@ -29,15 +32,14 @@ def _is_scanning() -> bool:
 @app.route("/")
 def index():
     db.init_db()
-    all_prices = db.get_all_recent_prices()
-    deals = find_deals(all_prices)
-    baseline = get_baseline_summary(all_prices)
+    all_pkg = db.get_package_history()
+    analysis = analyze_packages(all_pkg)
     last_scan = db.get_last_scan()
     scan_count = db.get_scan_count()
     return render_template(
         "index.html",
-        deals=deals,
-        baseline=baseline,
+        vacations=VACATIONS,
+        analysis=analysis,
         last_scan=last_scan,
         scan_count=scan_count,
         is_scanning=_is_scanning(),
@@ -57,7 +59,7 @@ def start_scan():
 
         def _worker():
             try:
-                for event in run_full_scan(headed=headed):
+                for event in run_package_scan(headed=headed):
                     _scan_queue.put(event)
             except Exception as e:
                 _scan_queue.put({"type": "error", "error": str(e)})
@@ -70,8 +72,6 @@ def start_scan():
 
 @app.route("/scan/stream")
 def scan_stream():
-    """Server-Sent Events endpoint — streams scan progress to the browser."""
-
     def _generate():
         while True:
             if _scan_queue is None:
@@ -90,13 +90,27 @@ def scan_stream():
     return Response(_generate(), mimetype="text/event-stream")
 
 
-@app.route("/deals")
-def deals_api():
+@app.route("/chart-data")
+def chart_data():
+    """Returns chart-ready JSON for all 5 vacations."""
     db.init_db()
     threshold = float(request.args.get("threshold", 1.0))
-    all_prices = db.get_all_recent_prices()
-    deals = find_deals(all_prices, std_dev_threshold=threshold)
-    return jsonify(deals)
+    all_pkg = db.get_package_history()
+    analysis = analyze_packages(all_pkg, std_dev_threshold=threshold)
+    return jsonify({
+        "chart_data": analysis["chart_data"],
+        "deals": analysis["deals"],
+        "vacation_stats": analysis["vacation_stats"],
+        "vacations": {
+            vid: {
+                "name": v.name,
+                "color": v.color,
+                "emoji": v.emoji,
+                "subtitle": v.subtitle,
+            }
+            for vid, v in VACATIONS.items()
+        },
+    })
 
 
 @app.route("/status")
