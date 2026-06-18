@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vanguard CX Measurement Framework</title>
+    <style>
+        :root {
+            --navy:        #1B3569;
+            --navy-dark:   #0F2044;
+            --navy-mid:    #2A4A8A;
+            --gold:        #C8A951;
+            --gold-light:  #E5C97A;
+
+            --blue:        #1565C0;
+            --blue-pale:   #E3F2FD;
+            --purple:      #6A1B9A;
+            --purple-pale: #F3E5F5;
+            --teal:        #00695C;
+            --teal-pale:   #E0F2F1;
+            --amber:       #9A6B00;
+            --amber-pale:  #FFFDE7;
+
+            --bg:          #F4F6F9;
+            --white:       #FFFFFF;
+            --gray-100:    #EEF0F5;
+            --gray-200:    #DDE1EA;
+            --gray-400:    #9EA7B8;
+            --gray-600:    #4A5568;
+            --text:        #1E2A3B;
+
+            --radius-sm: 6px;
+            --radius-md: 10px;
+            --radius-lg: 14px;
+            --shadow-sm: 0 1px 4px rgba(30,42,59,0.08);
+            --shadow-md: 0 4px 16px rgba(30,42,59,0.10);
+            --shadow-lg: 0 8px 32px rgba(30,42,59,0.14);
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        /* ── HEADER ─────────────────────────────────── */
+        .header {
+            background: linear-gradient(150deg, var(--navy-dark) 0%, var(--navy) 55%, var(--navy-mid) 100%);
+            color: white;
+            padding: 4rem 2rem 3rem;
+            text-align: center;
+            position: relative;
+        }
+
+        .header::after {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            height: 4px;
+            background: linear-gradient(to right, var(--blue), var(--purple), var(--teal), var(--gold));
+        }
+
+        .header-tag {
+            display: inline-block;
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: var(--gold-light);
+            background: rgba(200,169,81,0.15);
+            border: 1px solid rgba(200,169,81,0.3);
+            padding: 0.25rem 1rem;
+            border-radius: 50px;
+            margin-bottom: 1.25rem;
+        }
+
+        .header h1 {
+            font-size: clamp(1.8rem, 4vw, 2.8rem);
+            font-weight: 800;
+            line-height: 1.15;
+            letter-spacing: -0.02em;
+            margin-bottom: 1rem;
+        }
+
+        .header h1 em { font-style: normal; color: var(--gold-light); }
+
+        .header-sub {
+            font-size: 1.05rem;
+            opacity: 0.8;
+            max-width: 640px;
+            margin: 0 auto 2.25rem;
+        }
+
+        .header-badges {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+        }
+
+        .h-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 50px;
+            padding: 0.4rem 1rem;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+        .dot-div  { background: var(--gold); }
+        .dot-seg  { background: #64B5F6; }
+        .dot-both { background: #81C784; }
+
+        /* ── LAYOUT ──────────────────────────────────── */
+        .page {
+            max-width: 1180px;
+            margin: 0 auto;
+            padding: 2.5rem 1.5rem 4rem;
+        }
+
+        .sec { margin-bottom: 3.5rem; }
+
+        .sec-title { margin-bottom: 1.75rem; }
+        .sec-title h2 { font-size: 1.4rem; font-weight: 700; color: var(--navy); }
+        .sec-title p  { font-size: 0.875rem; color: var(--gray-600); margin-top: 0.3rem; }
+
+        /* ── FRAMEWORK FLOW ──────────────────────────── */
+        .flow {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr auto 1fr auto 1fr;
+            align-items: start;
+            gap: 0.5rem;
+            margin-bottom: 0.875rem;
+        }
+
+        .flow-arrow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding-top: 3.2rem;
+            color: var(--gray-400);
+            font-size: 1.6rem;
+            font-weight: 300;
+            flex-shrink: 0;
+        }
+
+        .pillar {
+            background: var(--white);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--gray-200);
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .pillar:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); }
+
+        .pillar-top { padding: 1.1rem 1.25rem 0.9rem; }
+
+        .pillar-seq {
+            font-size: 0.64rem;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--gray-400);
+            margin-bottom: 0.2rem;
+        }
+
+        .pillar-name { font-size: 1.05rem; font-weight: 700; line-height: 1.2; }
+        .pillar-desc { font-size: 0.74rem; margin-top: 0.2rem; opacity: 0.6; }
+
+        .p-interactions { border-top: 3px solid var(--blue); }
+        .p-interactions .pillar-name { color: var(--blue); }
+
+        .p-perception { border-top: 3px solid var(--purple); }
+        .p-perception .pillar-name { color: var(--purple); }
+
+        .p-loyalty { border-top: 3px solid var(--teal); }
+        .p-loyalty .pillar-name { color: var(--teal); }
+
+        .p-outcomes { border-top: 3px solid var(--amber); }
+        .p-outcomes .pillar-name { color: var(--amber); }
+
+        .pillar-body { padding: 0 1.25rem 1.25rem; }
+
+        .p-divider { height: 1px; background: var(--gray-100); margin: 0 0 1rem; }
+
+        .metric-row { margin-bottom: 0.75rem; }
+        .metric-row:last-child { margin-bottom: 0; }
+
+        .metric-who { margin-bottom: 0.3rem; }
+
+        .badge {
+            display: inline-block;
+            padding: 0.15rem 0.5rem;
+            border-radius: 20px;
+            font-size: 0.64rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        .badge-div  { background: #FEF3C7; color: #92400E; border: 1px solid #FDE68A; }
+        .badge-seg  { background: #DBEAFE; color: #1E40AF; border: 1px solid #BFDBFE; }
+        .badge-both { background: #D1FAE5; color: #065F46; border: 1px solid #A7F3D0; }
+
+        .metric-text {
+            font-size: 0.82rem;
+            background: var(--gray-100);
+            border-radius: var(--radius-sm);
+            padding: 0.45rem 0.75rem;
+        }
+
+        .metric-text strong { display: block; font-weight: 600; }
+        .metric-text small  { color: var(--gray-600); font-size: 0.76rem; }
+
+        .metric-na {
+            font-size: 0.8rem;
+            color: var(--gray-400);
+            font-style: italic;
+            padding: 0.45rem 0.75rem;
+        }
+
+        /* ── CONTROL SPECTRUM ────────────────────────── */
+        .spectrum-wrap {
+            background: white;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--gray-200);
+            padding: 1.1rem 1.5rem 1rem;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .spectrum-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            font-weight: 700;
+            margin-bottom: 0.45rem;
+        }
+
+        .spec-left  { color: var(--blue); }
+        .spec-right { color: var(--amber); }
+
+        .spectrum-bar {
+            height: 6px;
+            border-radius: 3px;
+            background: linear-gradient(to right, var(--blue) 0%, var(--purple) 33%, var(--teal) 66%, var(--gold) 100%);
+            margin-bottom: 0.45rem;
+        }
+
+        .spectrum-ticks {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr auto 1fr auto 1fr;
+        }
+
+        .spec-tick { text-align: center; font-size: 0.69rem; color: var(--gray-600); padding: 0 0.25rem; }
+        .spec-tick-gap { width: 1.5rem; }
+
+        /* ── MATRIX TABLE ────────────────────────────── */
+        .matrix-wrap {
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--gray-200);
+        }
+
+        .matrix-table { width: 100%; border-collapse: collapse; }
+
+        .matrix-table th {
+            background: var(--navy);
+            color: white;
+            padding: 0.875rem 1rem;
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            text-align: center;
+        }
+
+        .matrix-table th:first-child { text-align: left; width: 160px; }
+
+        .matrix-table td {
+            padding: 1rem 1rem 0.875rem;
+            border-bottom: 1px solid var(--gray-100);
+            text-align: center;
+            vertical-align: top;
+        }
+
+        .matrix-table td:first-child {
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.875rem;
+            background: var(--gray-100);
+        }
+
+        .matrix-table tr:last-child td { border-bottom: none; }
+
+        .mx-yes { font-size: 1.1rem; color: #059669; display: block; }
+        .mx-no  { font-size: 1.1rem; color: var(--gray-400); display: block; }
+        .mx-detail { font-size: 0.75rem; color: var(--gray-600); margin-top: 0.2rem; line-height: 1.4; }
+
+        /* ── DRIVERS SECTION ─────────────────────────── */
+        .drivers-callout {
+            background: linear-gradient(135deg, var(--blue-pale), var(--purple-pale));
+            border: 1px solid #BFDBFE;
+            border-radius: var(--radius-lg);
+            padding: 1.5rem 1.75rem;
+            margin-bottom: 2rem;
+            display: flex;
+            gap: 1.25rem;
+            align-items: flex-start;
+        }
+
+        .callout-icon { font-size: 2rem; flex-shrink: 0; line-height: 1; }
+
+        .drivers-callout h3 { font-size: 1rem; font-weight: 700; color: var(--navy); margin-bottom: 0.4rem; }
+        .drivers-callout p  { font-size: 0.875rem; color: var(--gray-600); line-height: 1.65; }
+
+        .drivers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.25rem;
+        }
+
+        .driver-cat {
+            background: white;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--gray-200);
+            padding: 1.25rem;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .driver-cat-title {
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--gray-600);
+            margin-bottom: 0.875rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        .chips { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.28rem 0.7rem;
+            border-radius: 20px;
+            font-size: 0.775rem;
+            background: var(--gray-100);
+            border: 1px solid var(--gray-200);
+            color: var(--gray-600);
+            cursor: pointer;
+            transition: all 0.15s ease;
+            user-select: none;
+        }
+
+        .chip:hover {
+            background: var(--blue-pale);
+            border-color: var(--blue);
+            color: var(--blue);
+        }
+
+        .chip.top {
+            background: var(--blue-pale);
+            border-color: #90CAF9;
+            color: var(--blue);
+            font-weight: 600;
+        }
+
+        .chip.selected {
+            background: var(--blue);
+            border-color: var(--blue);
+            color: white;
+        }
+
+        .chips-note {
+            margin-top: 1rem;
+            text-align: center;
+            font-size: 0.75rem;
+            color: var(--gray-400);
+        }
+
+        /* ── LOYALTY DETAIL CALLOUT ──────────────────── */
+        .loyalty-note {
+            background: var(--teal-pale);
+            border: 1px solid #80CBC4;
+            border-radius: var(--radius-md);
+            padding: 1rem 1.25rem;
+            margin-top: 1rem;
+            font-size: 0.82rem;
+            color: var(--teal);
+        }
+
+        .loyalty-note strong { display: block; margin-bottom: 0.25rem; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.07em; }
+
+        /* ── CTA ─────────────────────────────────────── */
+        .cta {
+            background: linear-gradient(135deg, var(--navy-dark) 0%, var(--navy) 100%);
+            border-radius: var(--radius-lg);
+            padding: 2.5rem;
+            color: white;
+        }
+
+        .cta-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .cta-header h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.6rem;
+        }
+
+        .cta-header h2 span { color: var(--gold-light); }
+
+        .cta-header p {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            max-width: 580px;
+            margin: 0 auto;
+        }
+
+        .seg-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+        }
+
+        .seg-card {
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: var(--radius-md);
+            padding: 1.25rem;
+            transition: background 0.2s;
+        }
+
+        .seg-card:hover { background: rgba(255,255,255,0.13); }
+
+        .seg-name { font-weight: 700; font-size: 0.95rem; margin-bottom: 0.4rem; }
+        .seg-ask  { font-size: 0.78rem; opacity: 0.7; line-height: 1.5; margin-bottom: 0.75rem; }
+
+        .seg-status {
+            display: inline-block;
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            padding: 0.2rem 0.6rem;
+            border-radius: 20px;
+            background: rgba(255,193,7,0.2);
+            color: #FFD54F;
+            border: 1px solid rgba(255,193,7,0.35);
+        }
+
+        /* ── FRAMEWORK SUMMARY BANNER ────────────────── */
+        .summary-strip {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 3.5rem;
+        }
+
+        .strip-card {
+            background: white;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--gray-200);
+            padding: 1.25rem 1.5rem;
+            box-shadow: var(--shadow-sm);
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+        }
+
+        .strip-icon { font-size: 1.75rem; flex-shrink: 0; line-height: 1; }
+
+        .strip-card h3 { font-size: 0.875rem; font-weight: 700; color: var(--navy); margin-bottom: 0.2rem; }
+        .strip-card p  { font-size: 0.8rem; color: var(--gray-600); line-height: 1.5; }
+
+        /* ── FOOTNOTE ─────────────────────────────────── */
+        .footnote {
+            text-align: center;
+            font-size: 0.75rem;
+            color: var(--gray-400);
+            margin-top: 2rem;
+        }
+
+        /* ── RESPONSIVE ───────────────────────────────── */
+        @media (max-width: 960px) {
+            .flow {
+                grid-template-columns: 1fr;
+                gap: 0.25rem;
+            }
+            .flow-arrow {
+                padding-top: 0;
+                transform: rotate(90deg);
+                justify-self: center;
+                margin: 0.1rem 0;
+            }
+            .seg-grid { grid-template-columns: repeat(2, 1fr); }
+            .summary-strip { grid-template-columns: 1fr; }
+            .spectrum-ticks { display: none; }
+        }
+
+        @media (max-width: 600px) {
+            .header { padding: 2.5rem 1.25rem 2rem; }
+            .seg-grid { grid-template-columns: 1fr; }
+            .drivers-callout { flex-direction: column; }
+            .cta { padding: 1.75rem 1.25rem; }
+        }
+
+        /* ── FADE-IN ANIMATION ────────────────────────── */
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(16px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .page > * {
+            animation: fadeUp 0.45s ease both;
+        }
+
+        .page > *:nth-child(1) { animation-delay: 0.05s; }
+        .page > *:nth-child(2) { animation-delay: 0.12s; }
+        .page > *:nth-child(3) { animation-delay: 0.19s; }
+        .page > *:nth-child(4) { animation-delay: 0.26s; }
+        .page > *:nth-child(5) { animation-delay: 0.33s; }
+        .page > *:nth-child(6) { animation-delay: 0.40s; }
+    </style>
+</head>
+<body>
+
+<!-- ══════════════════ HEADER ══════════════════ -->
+<header class="header">
+    <div class="header-tag">Investor Services &amp; Operations</div>
+    <h1>Client Experience <em>Measurement Framework</em></h1>
+    <p class="header-sub">
+        A common North Star across four segments — consistent where alignment matters most,
+        flexible where segments know their clients best.
+    </p>
+    <div class="header-badges">
+        <div class="h-badge"><span class="dot dot-both"></span> Division &amp; Segment share core metrics</div>
+        <div class="h-badge"><span class="dot dot-seg"></span> Segments own their interaction drivers</div>
+        <div class="h-badge"><span class="dot dot-div"></span> Net Cash Flow unifies all levels</div>
+    </div>
+</header>
+
+<div class="page">
+
+    <!-- ══════════════════ SUMMARY STRIP ══════════════════ -->
+    <div class="summary-strip">
+        <div class="strip-card">
+            <div class="strip-icon">🔗</div>
+            <div>
+                <h3>A Causal Chain</h3>
+                <p>Interactions drive perception. Perception builds loyalty. Loyalty drives business outcomes. Each layer is measurable and connected.</p>
+            </div>
+        </div>
+        <div class="strip-card">
+            <div class="strip-icon">🎯</div>
+            <div>
+                <h3>Three Shared Metrics</h3>
+                <p>Net Cash Flow, NPS, and CSAT are the division's common North Star — every segment measures the same thing at the top three levels.</p>
+            </div>
+        </div>
+        <div class="strip-card">
+            <div class="strip-icon">🔧</div>
+            <div>
+                <h3>Segment-Defined Drivers</h3>
+                <p>Interaction drivers are not tracked at division level. Each segment selects 5–8 operational metrics that reflect their client reality.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════════════ SECTION 1: FRAMEWORK FLOW ══════════════════ -->
+    <section class="sec">
+        <div class="sec-title">
+            <h2>The Causal Framework</h2>
+            <p>Four connected pillars — reading left to right shows what drives what; bottom to top shows where control shifts</p>
+        </div>
+
+        <div class="flow">
+
+            <!-- PILLAR 1: INTERACTIONS -->
+            <div class="pillar p-interactions">
+                <div class="pillar-top">
+                    <div class="pillar-seq">Pillar 1 · Foundation</div>
+                    <div class="pillar-name">Interactions &amp; Drivers</div>
+                    <div class="pillar-desc">How we show up every day</div>
+                </div>
+                <div class="pillar-body">
+                    <div class="p-divider"></div>
+                    <div class="metric-row">
+                        <div class="metric-who"><span class="badge badge-div">Division</span></div>
+                        <div class="metric-na">Not tracked at division level</div>
+                    </div>
+                    <div class="metric-row">
+                        <div class="metric-who"><span class="badge badge-seg">Segment</span></div>
+                        <div class="metric-text">
+                            <strong>Segment-defined operational drivers</strong>
+                            <small>5–8 metrics per segment — chosen by each team from research-backed options</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flow-arrow">→</div>
+
+            <!-- PILLAR 2: PERCEPTION -->
+            <div class="pillar p-perception">
+                <div class="pillar-top">
+                    <div class="pillar-seq">Pillar 2 · Voice of Client</div>
+                    <div class="pillar-name">Perception</div>
+                    <div class="pillar-desc">How clients feel about us</div>
+                </div>
+                <div class="pillar-body">
+                    <div class="p-divider"></div>
+                    <div class="metric-row">
+                        <div class="metric-who"><span class="badge badge-both">Both</span></div>
+                        <div class="metric-text">
+                            <strong>CSAT Score</strong>
+                            <small>50% Phone CSAT · 50% Digital CSAT<br>Consistent across all four segments</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flow-arrow">→</div>
+
+            <!-- PILLAR 3: LOYALTY -->
+            <div class="pillar p-loyalty">
+                <div class="pillar-top">
+                    <div class="pillar-seq">Pillar 3 · Relationship</div>
+                    <div class="pillar-name">Loyalty</div>
+                    <div class="pillar-desc">Client commitment &amp; advocacy</div>
+                </div>
+                <div class="pillar-body">
+                    <div class="p-divider"></div>
+                    <div class="metric-row">
+                        <div class="metric-who"><span class="badge badge-div">Division</span></div>
+                        <div class="metric-text">
+                            <strong>Net Promoter Score (NPS)</strong>
+                        </div>
+                    </div>
+                    <div class="metric-row">
+                        <div class="metric-who"><span class="badge badge-seg">Segment</span></div>
+                        <div class="metric-text">
+                            <strong>NPS + Evolution Metrics</strong>
+                            <small>Breadth of Relationship · Depth of Relationship</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flow-arrow">→</div>
+
+            <!-- PILLAR 4: BUSINESS OUTCOMES -->
+            <div class="pillar p-outcomes">
+                <div class="pillar-top">
+                    <div class="pillar-seq">Pillar 4 · Growth</div>
+                    <div class="pillar-name">Business Outcomes</div>
+                    <div class="pillar-desc">The ultimate measure</div>
+                </div>
+                <div class="pillar-body">
+                    <div class="p-divider"></div>
+                    <div class="metric-row">
+                        <div class="metric-who"><span class="badge badge-both">Both</span></div>
+                        <div class="metric-text">
+                            <strong>Net Cash Flow</strong>
+                            <small>Identical metric at division and segment level — no variation needed here</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Control Spectrum -->
+        <div class="spectrum-wrap">
+            <div class="spectrum-labels">
+                <span class="spec-left">◀ Most Segment Flexibility</span>
+                <span class="spec-right">Most Division Standardization ▶</span>
+            </div>
+            <div class="spectrum-bar"></div>
+            <div class="spectrum-ticks">
+                <div class="spec-tick">Interactions</div>
+                <div class="spec-tick-gap"></div>
+                <div class="spec-tick">Perception</div>
+                <div class="spec-tick-gap"></div>
+                <div class="spec-tick">Loyalty</div>
+                <div class="spec-tick-gap"></div>
+                <div class="spec-tick">Business Outcomes</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ══════════════════ SECTION 2: OWNERSHIP MATRIX ══════════════════ -->
+    <section class="sec">
+        <div class="sec-title">
+            <h2>Division vs. Segment Ownership</h2>
+            <p>Exactly what gets measured at each organizational level — and how the metrics align</p>
+        </div>
+
+        <div class="matrix-wrap">
+            <table class="matrix-table">
+                <thead>
+                    <tr>
+                        <th>Level</th>
+                        <th>Interactions / Drivers</th>
+                        <th>Perception</th>
+                        <th>Loyalty</th>
+                        <th>Business Outcomes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>📊 Division</td>
+                        <td>
+                            <span class="mx-no">—</span>
+                            <div class="mx-detail">Not tracked at division level.<br>Segment-defined only.</div>
+                        </td>
+                        <td>
+                            <span class="mx-yes">✓</span>
+                            <div class="mx-detail">CSAT<br>50% Phone + 50% Digital</div>
+                        </td>
+                        <td>
+                            <span class="mx-yes">✓</span>
+                            <div class="mx-detail">Net Promoter Score (NPS)</div>
+                        </td>
+                        <td>
+                            <span class="mx-yes">✓</span>
+                            <div class="mx-detail">Net Cash Flow</div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>🎯 Each Segment</td>
+                        <td>
+                            <span class="mx-yes">✓</span>
+                            <div class="mx-detail">Segment-chosen drivers<br>(5–8 metrics, segment-proposed)</div>
+                        </td>
+                        <td>
+                            <span class="mx-yes">✓</span>
+                            <div class="mx-detail">Same CSAT as division<br>Fully consistent</div>
+                        </td>
+                        <td>
+                            <span class="mx-yes">✓</span>
+                            <div class="mx-detail">NPS + optional evolution:<br>Breadth &amp; Depth of Relationship</div>
+                        </td>
+                        <td>
+                            <span class="mx-yes">✓</span>
+                            <div class="mx-detail">Net Cash Flow<br>Identical — no variation</div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Loyalty evolution note -->
+        <div class="loyalty-note">
+            <strong>💡 Loyalty Evolution Metrics (Segment-Level)</strong>
+            <strong>Breadth of Relationship</strong> — tracks how many clients are adding new account types, expanding what they hold at Vanguard.<br>
+            <strong>Depth of Relationship</strong> — tracks the growth of assets within existing account types. Both are empirical behavioral metrics, not survey-based.
+        </div>
+    </section>
+
+    <!-- ══════════════════ SECTION 3: INTERACTION DRIVERS ══════════════════ -->
+    <section class="sec">
+        <div class="sec-title">
+            <h2>Interaction Drivers: Research-Backed Examples</h2>
+            <p>What the data shows moves the needle — provided as a starting menu for each segment to draw from</p>
+        </div>
+
+        <div class="drivers-callout">
+            <div class="callout-icon">🔬</div>
+            <div>
+                <h3>Segments own this layer — here's what our research found</h3>
+                <p>
+                    We've surfaced approximately <strong>12 proven interaction metrics</strong> that show strong
+                    correlations to perception, loyalty, and growth outcomes. Highlighted items below are the
+                    strongest findings. These are <em>ideas and examples</em> — the ask is that
+                    <strong>each segment reviews these and comes back with their proposed set of 5–8
+                    interaction drivers</strong> that reflect their operational reality and client experience priorities.
+                </p>
+            </div>
+        </div>
+
+        <div class="drivers-grid">
+            <div class="driver-cat">
+                <div class="driver-cat-title">📞 Call Center &amp; Service</div>
+                <div class="chips">
+                    <span class="chip top" title="Top research finding">★ First Call Resolution</span>
+                    <span class="chip top" title="Top research finding">★ Average Seconds to Answer</span>
+                    <span class="chip top" title="Top research finding">★ Phone Service Level</span>
+                    <span class="chip">Call Abandonment Rate</span>
+                    <span class="chip">Transfer Rate</span>
+                    <span class="chip">Call Quality Score</span>
+                </div>
+            </div>
+
+            <div class="driver-cat">
+                <div class="driver-cat-title">📄 Operations &amp; Paperwork</div>
+                <div class="chips">
+                    <span class="chip top" title="Top research finding">★ NIGO Rate (Not In Good Order)</span>
+                    <span class="chip top" title="Top research finding">★ Case Service Level</span>
+                    <span class="chip">Repeat Contact Rate</span>
+                    <span class="chip">Processing Cycle Time</span>
+                </div>
+            </div>
+
+            <div class="driver-cat">
+                <div class="driver-cat-title">💻 Digital &amp; Self-Service</div>
+                <div class="chips">
+                    <span class="chip">Digital Self-Service Rate</span>
+                    <span class="chip">Digital Adoption Rate</span>
+                    <span class="chip">Online Task Completion</span>
+                    <span class="chip">Digital Channel CSAT</span>
+                </div>
+            </div>
+        </div>
+
+        <p class="chips-note">★ Highlighted drivers are primary research findings with strong correlations to CX outcomes &nbsp;·&nbsp; Click any chip to mark it</p>
+    </section>
+
+    <!-- ══════════════════ SECTION 4: CTA ══════════════════ -->
+    <section>
+        <div class="cta">
+            <div class="cta-header">
+                <h2>The Ask: <span>Each Segment Proposes Their Drivers</span></h2>
+                <p>
+                    Review the research examples above, consider what operational metrics best reflect your
+                    segment's day-to-day client experience reality, and come back with your proposed
+                    Interaction Driver set — the 5–8 metrics that will be your segment's operational North Star.
+                </p>
+            </div>
+
+            <div class="seg-grid">
+                <div class="seg-card">
+                    <div class="seg-name">Segment 1</div>
+                    <div class="seg-ask">Review the driver examples and propose 5–8 interaction metrics that reflect your operational priorities and client touchpoints.</div>
+                    <span class="seg-status">Pending Proposal</span>
+                </div>
+                <div class="seg-card">
+                    <div class="seg-name">Segment 2</div>
+                    <div class="seg-ask">Review the driver examples and propose 5–8 interaction metrics that reflect your operational priorities and client touchpoints.</div>
+                    <span class="seg-status">Pending Proposal</span>
+                </div>
+                <div class="seg-card">
+                    <div class="seg-name">Segment 3</div>
+                    <div class="seg-ask">Review the driver examples and propose 5–8 interaction metrics that reflect your operational priorities and client touchpoints.</div>
+                    <span class="seg-status">Pending Proposal</span>
+                </div>
+                <div class="seg-card">
+                    <div class="seg-name">Segment 4</div>
+                    <div class="seg-ask">Review the driver examples and propose 5–8 interaction metrics that reflect your operational priorities and client touchpoints.</div>
+                    <span class="seg-status">Pending Proposal</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="footnote">
+        Vanguard Investor Services &amp; Operations &nbsp;·&nbsp; Client Experience Measurement Framework &nbsp;·&nbsp; Internal Working Document
+    </div>
+
+</div>
+
+<script>
+    document.querySelectorAll('.chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+            chip.classList.toggle('selected');
+            if (chip.classList.contains('selected') && chip.classList.contains('top')) {
+                chip.classList.remove('top');
+            }
+        });
+    });
+</script>
+
+</body>
+</html>
